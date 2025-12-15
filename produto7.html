@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yara Rose - Lattafa | Perfume Store</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Perfume Store</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Início</a></li>
+                <li><a href="femininos.html">Femininos</a></li>
+                <li><a href="masculinos.html">Masculinos</a></li>
+                <li><a href="sobre.html">Sobre</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="#" id="userIcon">👤</a>
+                <a href="carrinho.html" id="cartIcon">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="product-detail">
+        <div class="product-container">
+            <div class="product-image">
+                <img src="images/yararose.jpeg" alt="Yara Rose - Lattafa">
+            </div>
+            
+            <div class="product-info">
+                <div class="breadcrumb">
+                    <a href="index.html">Início</a> > <a href="femininos.html">Femininos</a> > Good Girl
+                </div>
+                
+                <h1>Yara Rose</h1>
+                <p class="brand">Lattafa</p>
+                
+                <div class="price">R$ 250,00</div>
+                
+                <div class="description">
+                    <p>O perfume Yara Rose da Lattafa é uma fragrância feminina, descrita como floral, romântica e elegante, com notas de topo de orquídea, heliotrópio e tangerina. O coração da fragrância é um acorde floral de diferentes tipos de rosas, com toques gourmands e de frutas tropicais. A base é composta por notas mais quentes, como madeiras suaves, baunilha, almíscar e sândalo, que proporcionam um rastro duradouro e envolvente. </p>
+                </div>
+
+                <div class="size-selector">
+                    <label>Tamanho:</label>
+                    <div class="size-options">
+                        <button class="size-btn" data-size="100ml">100ml</button>
+                    </div>
+                </div>
+
+                <button class="add-to-cart-btn" onclick="addToCartFromProduct()">Adicionar ao Carrinho</button>
+
+                <div class="product-features">
+                    <div class="feature">
+                        <strong>✓</strong> Frete grátis acima de R$ 299
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Parcele em até 6x sem juros
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Troca grátis em 30 dias
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Perfume Store. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script>
+        const currentProduct = {
+            id: 7,
+            name: "Yara Rose",
+            brand: "Lattafa",
+            price: 250.00,
+            category: "feminino",
+            image: "images/yararose.jpeg",
+            sizes: ["100ml"]
+        };
+
+        let selectedSize = "30ml";
+
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedSize = this.dataset.size;
+            });
+        });
+
+        function addToCartFromProduct() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const existingItem = cart.find(item => item.id === currentProduct.id && item.size === selectedSize);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...currentProduct,
+                    size: selectedSize,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            alert(`${currentProduct.name} (${selectedSize}) adicionado ao carrinho!`);
+        }
+
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = count;
+            }
+        }
+
+        const userIcon = document.getElementById('userIcon');
+        if (userIcon) {
+            userIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    window.location.href = 'conta.html';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        updateCartCount();
+    </script>
+</body>
+</html>

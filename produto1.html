@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afeef - Lattafa | Perfume Store</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Perfume Store</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Início</a></li>
+                <li><a href="femininos.html">Femininos</a></li>
+                <li><a href="masculinos.html">Masculinos</a></li>
+                <li><a href="sobre.html">Sobre</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="#" id="userIcon">👤</a>
+                <a href="carrinho.html" id="cartIcon">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="product-detail">
+        <div class="product-container">
+            <div class="product-image">
+                <img src="images/afeef.jpg" alt="Afeef - Lattafa">
+            </div>
+            
+            <div class="product-info">
+                <div class="breadcrumb">
+                    <a href="index.html">Início</a> > <a href="femininos.html">Femininos</a> > Afeef
+                </div>
+                
+                <h1>Afeef</h1>
+                <p class="brand">Lattafa</p>
+                
+                <div class="price">R$ 375,00</div>
+                
+                <div class="description">
+                    <p>O Lattafa Afeef é um perfume unissex lançado em 2024, descrito como uma fragrância oriental, versátil e sofisticada. Sua composição combina notas de topo frutadas e especiadas (pêssego, pimenta rosa e bergamota), um coração floral elegante (tuberosa, flor de laranjeira e jasmim) e uma base quente e doce (sândalo, pralinê, âmbar e patchouli). </p>
+                </div>
+
+                <div class="size-selector">
+                    <label>Tamanho:</label>
+                    <div class="size-options">
+                        <button class="size-btn" data-size="100ml">100ml</button>
+                    </div>
+                </div>
+
+                <button class="add-to-cart-btn" onclick="addToCartFromProduct()">Adicionar ao Carrinho</button>
+
+                <div class="product-features">
+                    <div class="feature">
+                        <strong>✓</strong> Frete grátis acima de R$ 299
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Parcele em até 6x sem juros
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Troca grátis em 30 dias
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Perfume Store. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script>
+        const currentProduct = {
+            id: 1,
+            name: "Gabrielle",
+            brand: "Chanel",
+            price: 589.00,
+            category: "feminino",
+            image: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400&h=400&fit=crop",
+            sizes: ["30ml", "50ml", "100ml"]
+        };
+
+        let selectedSize = "30ml";
+
+        // Size selection
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedSize = this.dataset.size;
+            });
+        });
+
+        // Add to cart
+        function addToCartFromProduct() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const existingItem = cart.find(item => item.id === currentProduct.id && item.size === selectedSize);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...currentProduct,
+                    size: selectedSize,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            alert(`${currentProduct.name} (${selectedSize}) adicionado ao carrinho!`);
+        }
+
+        // Update cart count
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = count;
+            }
+        }
+
+        // User icon functionality
+        const userIcon = document.getElementById('userIcon');
+        if (userIcon) {
+            userIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    window.location.href = 'conta.html';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        // Initialize cart count
+        updateCartCount();
+    </script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Million - Paco Rabanne | Perfume Store</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Perfume Store</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Início</a></li>
+                <li><a href="femininos.html">Femininos</a></li>
+                <li><a href="masculinos.html">Masculinos</a></li>
+                <li><a href="sobre.html">Sobre</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="#" id="userIcon">👤</a>
+                <a href="carrinho.html" id="cartIcon">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="product-detail">
+        <div class="product-container">
+            <div class="product-image">
+                <img src="images/onemillion.jpg.jpg" alt="One Million - Paco Rabanne">
+            </div>
+            
+            <div class="product-info">
+                <div class="breadcrumb">
+                    <a href="index.html">Início</a> > <a href="masculinos.html">Masculinos</a> > One Million
+                </div>
+                
+                <h1>One Million</h1>
+                <p class="brand">Paco Rabanne</p>
+                
+                <div class="price">R$ 675,00</div>
+                
+                <div class="description">
+                    <p>One Million é pura sedução. Notas de canela, couro e madeiras brancas criam uma fragrância intensa e magnética para homens confiantes.</p>
+                </div>
+
+                <div class="size-selector">
+                    <label>Tamanho:</label>
+                    <div class="size-options">
+                        <button class="size-btn" data-size="100ml">100ml</button>
+                    </div>
+                </div>
+
+                <button class="add-to-cart-btn" onclick="addToCartFromProduct()">Adicionar ao Carrinho</button>
+
+                <div class="product-features">
+                    <div class="feature">
+                        <strong>✓</strong> Frete grátis acima de R$ 299
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Parcele em até 6x sem juros
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Troca grátis em 30 dias
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Perfume Store. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script>
+        const currentProduct = {
+            id: 8,
+            name: "One Million",
+            brand: "Paco Rabanne",
+            price: 675.00,
+            category: "masculino",
+            image: "images/onemillion.jpg.jpg",
+            sizes: ["100ml"]
+        };
+
+        let selectedSize = "50ml";
+
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedSize = this.dataset.size;
+            });
+        });
+
+        function addToCartFromProduct() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const existingItem = cart.find(item => item.id === currentProduct.id && item.size === selectedSize);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({
+                    ...currentProduct,
+                    size: selectedSize,
+                    quantity: 1
+                });
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            alert(`${currentProduct.name} (${selectedSize}) adicionado ao carrinho!`);
+        }
+
+        function updateCartCount() {
+            const cart = JSON.parse(localStorage.getItem('cart')) || [];
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = count;
+            }
+        }
+
+        const userIcon = document.getElementById('userIcon');
+        if (userIcon) {
+            userIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser) {
+                    window.location.href = 'conta.html';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        updateCartCount();
+    </script>
+</body>
+</html>

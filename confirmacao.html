@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Confirmado - Perfumaria Rivers</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">PERFUMARIA RIVERS</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <div style="max-width: 600px; margin: 4rem auto; text-align: center;">
+                    <!-- Success icon with green color -->
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 2rem; color: #22c55e;">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <h1 class="page-title" style="color: #22c55e; margin-bottom: 1rem;">Pagamento Confirmado!</h1>
+                    <p class="page-subtitle" style="margin-bottom: 3rem;">Seu pedido foi recebido com sucesso e está sendo processado.</p>
+                    
+                    <!-- Order details card -->
+                    <div style="background: var(--color-muted); padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; text-align: left;">
+                        <div style="border-bottom: 1px solid var(--color-border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                            <p style="font-size: 0.875rem; color: var(--color-muted-foreground); margin-bottom: 0.5rem;">Número do Pedido</p>
+                            <p style="font-size: 1.5rem; font-weight: 600;" id="orderNumber"></p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <p style="font-size: 0.875rem; color: var(--color-muted-foreground); margin-bottom: 0.25rem;">Valor Total</p>
+                                <p style="font-size: 1.25rem; font-weight: 600;" id="orderTotal"></p>
+                            </div>
+                            <div>
+                                <p style="font-size: 0.875rem; color: var(--color-muted-foreground); margin-bottom: 0.25rem;">Forma de Pagamento</p>
+                                <p style="font-size: 1.25rem; font-weight: 600;" id="paymentMethod"></p>
+                            </div>
+                        </div>
+
+                        <div style="background: #22c55e; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; padding: 1rem; border-radius: 0.5rem; text-align: center;">
+                            <p style="font-weight: 600; margin-bottom: 0.25rem;">✓ Pagamento Aprovado</p>
+                            <p style="font-size: 0.875rem; opacity: 0.9;">Seu pedido será enviado em breve</p>
+                        </div>
+                    </div>
+
+                    <!-- Additional information -->
+                    <div style="background: white; border: 1px solid var(--color-border); padding: 1.5rem; border-radius: 0.75rem; margin-bottom: 2rem; text-align: left;">
+                        <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Próximos Passos</h3>
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--color-border); display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="color: #22c55e; font-size: 1.25rem;">📧</span>
+                                <div>
+                                    <strong>Confirmação por E-mail</strong>
+                                    <p style="font-size: 0.875rem; color: var(--color-muted-foreground); margin: 0.25rem 0 0 0;">Enviamos todos os detalhes para seu e-mail</p>
+                                </div>
+                            </li>
+                            <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--color-border); display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="color: #22c55e; font-size: 1.25rem;">📦</span>
+                                <div>
+                                    <strong>Preparação do Pedido</strong>
+                                    <p style="font-size: 0.875rem; color: var(--color-muted-foreground); margin: 0.25rem 0 0 0;">Separaremos seus produtos com cuidado</p>
+                                </div>
+                            </li>
+                            <li style="padding: 0.75rem 0; display: flex; align-items: start; gap: 0.75rem;">
+                                <span style="color: #22c55e; font-size: 1.25rem;">🚚</span>
+                                <div>
+                                    <strong>Código de Rastreamento</strong>
+                                    <p style="font-size: 0.875rem; color: var(--color-muted-foreground); margin: 0.25rem 0 0 0;">Enviaremos o código assim que o pedido for despachado</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <a href="index.html" class="btn btn-primary">Voltar para Home</a>
+                        <a href="conta.html" class="btn btn-secondary">Meus Pedidos</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const orderNumber = '#' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        document.getElementById('orderNumber').textContent = orderNumber;
+
+        const orderData = JSON.parse(localStorage.getItem('orderData') || '{}');
+        
+        if (orderData.total) {
+            document.getElementById('orderTotal').textContent = 'R$ ' + orderData.total.toFixed(2);
+        } else {
+            document.getElementById('orderTotal').textContent = 'R$ 0,00';
+        }
+
+        if (orderData.paymentMethod) {
+            document.getElementById('paymentMethod').textContent = orderData.paymentMethod;
+        } else {
+            document.getElementById('paymentMethod').textContent = 'N/A';
+        }
+
+        localStorage.removeItem('orderData');
+    </script>
+</body>
+</html>
+

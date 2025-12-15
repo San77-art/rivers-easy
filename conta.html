@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Conta - Perfumaria Rivers</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">PERFUMARIA RIVERS</a>
+                <nav class="nav">
+                    <a href="femininos.html">Femininos</a>
+                    <a href="masculinos.html">Masculinos</a>
+                    <a href="importados.html">Importados</a>
+                    <a href="marcas.html">Marcas</a>
+                </nav>
+                <div class="header-actions">
+                    <a href="carrinho.html" class="icon-btn cart-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-header">
+            <div class="container">
+                <h1 class="page-title">Minha Conta</h1>
+            </div>
+        </div>
+
+        <section class="section">
+            <div class="container">
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <div class="checkout-section">
+                        <h3 class="section-heading">Informações da Conta</h3>
+                        <div id="userInfo"></div>
+                        <button class="btn btn-secondary" onclick="auth.logout()">Sair</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+    <script>
+        if (!auth.user) {
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('userInfo').innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Nome</label>
+                <div style="padding: 0.75rem; background: var(--color-muted); border-radius: 0.375rem;">
+                    ${auth.user.name}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <div style="padding: 0.75rem; background: var(--color-muted); border-radius: 0.375rem;">
+                    ${auth.user.email}
+                </div>
+            </div>
+        `;
+    </script>
+</body>
+</html>

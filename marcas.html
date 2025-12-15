@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marcas - Perfumaria Rivers</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="logo">PERFUMARIA RIVERS</a>
+                <nav class="nav">
+                    <a href="femininos.html">Femininos</a>
+                    <a href="masculinos.html">Masculinos</a>
+                    <a href="importados.html">Importados</a>
+                    <a href="marcas.html">Marcas</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="icon-btn" id="userBtn"></button>
+                    <a href="carrinho.html" class="icon-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Added brand selection section -->
+        <div class="page-header">
+            <div class="container">
+                <h1 class="page-title">Nossas Marcas</h1>
+                <p class="page-subtitle">Selecione uma marca para ver os produtos disponíveis</p>
+            </div>
+        </div>
+
+        <!-- Brand logos grid -->
+        <section class="section" id="brandsSection">
+            <div class="container">
+                <div class="brands-grid" id="brandsGrid"></div>
+            </div>
+        </section>
+
+        <!-- Products section (hidden initially) -->
+        <section class="section" id="productsSection" style="display: none;">
+            <div class="container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2 id="brandTitle" style="font-family: var(--font-heading); font-size: 2rem; color: var(--color-foreground);"></h2>
+                    <button id="backBtn" style="padding: 0.5rem 1.5rem; background: var(--color-muted); color: var(--color-foreground); border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">Voltar às Marcas</button>
+                </div>
+                <div class="product-grid" id="productsGrid"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2025 Perfumaria Rivers. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+    <script>
+        const brandLogos = {
+            "Armaf": "images/armaflogo.jpg.jpg",
+            "Lattafa": "images/lattafalogo.jpg.jpg",
+            "Al Wataniah": "images/alwataniahlogo.jpg.jpg",
+            "Paco Rabanne": "images/pacorabannelogo.jpg.jpg",
+            "Afnan": "images/afnanlogo.jpg",
+            "Carolina Herrera": "images/carolinaherrera.jpg.jpg",
+            "French Avenue": "images/frenchlogo.jpg",
+            "Orientica": "images/orienticalogo.webp"
+        };
+
+        const brandsGrid = document.getElementById('brandsGrid');
+        const brandsSection = document.getElementById('brandsSection');
+        const productsSection = document.getElementById('productsSection');
+        const productsGrid = document.getElementById('productsGrid');
+        const brandTitle = document.getElementById('brandTitle');
+        const backBtn = document.getElementById('backBtn');
+
+        function renderBrands() {
+            brandsGrid.innerHTML = brands.map(brand => {
+                const productCount = products.filter(p => p.brand === brand.name).length;
+                return `
+                    <div class="brand-card" data-brand="${brand.name}">
+                        <div class="brand-logo">
+                            <img src="${brandLogos[brand.name]}" alt="${brand.name}">
+                        </div>
+                        <h3>${brand.name}</h3>
+                        <p>${productCount} produto(s) disponível(is)</p>
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.brand-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const brandName = card.dataset.brand;
+                    showBrandProducts(brandName);
+                });
+            });
+        }
+
+        function showBrandProducts(brandName) {
+            const brandProducts = products.filter(p => p.brand === brandName);
+            
+            brandTitle.textContent = `Perfumes ${brandName}`;
+            productsGrid.innerHTML = brandProducts.map(product => `
+                <a href="produto${product.id}.html" class="product-card" data-product-id="${product.id}">
+                    <div class="product-image">
+                        <img src="${product.image}" alt="${product.name}">
+                    </div>
+                    <div class="product-info">
+                        <p class="product-brand">${product.brand}</p>
+                        <h3 class="product-name">${product.name}</h3>
+                        <p class="product-price">R$ ${product.price.toFixed(2)}</p>
+                    </div>
+                    <button class="btn btn-primary add-to-cart-btn" onclick="event.preventDefault(); event.stopPropagation(); addToCart(${product.id})">Adicionar ao Carrinho</button>
+                </a>
+            `).join('');
+
+            brandsSection.style.display = 'none';
+            productsSection.style.display = 'block';
+        }
+
+        backBtn.addEventListener('click', () => {
+            brandsSection.style.display = 'block';
+            productsSection.style.display = 'none';
+        });
+
+        // Initialize
+        renderBrands();
+    </script>
+</body>
+</html>
