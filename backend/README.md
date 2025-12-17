@@ -8,21 +8,21 @@ Backend Node.js para processar pagamentos com Mercado Pago de forma segura.
 
 Abra o terminal na pasta `backend` e execute:
 
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
 ### Passo 2: Configurar Credenciais do Mercado Pago
 
 1. Copie o arquivo `.env.example` e renomeie para `.env`:
-   \`\`\`bash
+   ```bash
    cp .env.example .env
-   \`\`\`
+   ```
 
 2. Abra o arquivo `.env` e adicione seu Access Token do Mercado Pago:
-   \`\`\`
+   ```
    MERCADOPAGO_ACCESS_TOKEN=APP_USR-seu-token-aqui
-   \`\`\`
+   ```
 
 3. **IMPORTANTE**: Nunca compartilhe ou faça commit do arquivo `.env`!
 
@@ -38,15 +38,15 @@ npm install
 
 Execute no terminal:
 
-\`\`\`bash
+```bash
 npm start
-\`\`\`
+```
 
 Ou para desenvolvimento com auto-reload:
 
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
 O servidor estará rodando em: `http://localhost:3001`
 
@@ -57,7 +57,7 @@ O servidor estará rodando em: `http://localhost:3001`
 **POST** `/api/process-payment`
 
 Corpo da requisição:
-\`\`\`json
+```json
 {
   "transaction_amount": 150.00,
   "token": "token_gerado_pelo_frontend",
@@ -72,14 +72,14 @@ Corpo da requisição:
     }
   }
 }
-\`\`\`
+```
 
 ### 2. Criar Pagamento PIX
 
 **POST** `/api/create-pix`
 
 Corpo da requisição:
-\`\`\`json
+```json
 {
   "transaction_amount": 150.00,
   "description": "Compra na Perfumaria Rivers",
@@ -87,7 +87,7 @@ Corpo da requisição:
     "email": "cliente@email.com"
   }
 }
-\`\`\`
+```
 
 ### 3. Verificar Status do Pagamento
 

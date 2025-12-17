@@ -1,536 +1,452 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Checkout - Perfumaria Rivers</title>
+
     <link rel="stylesheet" href="styles.css">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- Added QR Code library for PIX -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Added Mercado Pago SDK -->
+
     <script src="https://sdk.mercadopago.com/js/v2"></script>
+
+    <style>
+
+        /* Estilos adicionais para a funcionalidade (spinner e cores) */
+
+        :root {
+
+            --color-primary: #3b82f6; /* Exemplo: Azul */
+
+            --color-primary-hover: #2563eb;
+
+            --color-muted: #f3f4f6; /* Exemplo: Cinza Claro */
+
+            --color-muted-foreground: #6b7280; /* Exemplo: Cinza Médio */
+
+        }
+
+        .summary-row {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            padding: 0.5rem 0;
+
+            border-bottom: 1px dashed #e5e7eb;
+
+            font-size: 0.875rem;
+
+        }
+
+        .summary-total {
+
+            font-size: 1.125rem;
+
+            font-weight: 600;
+
+            border-top: 2px solid #333;
+
+            border-bottom: none;
+
+            margin-top: 1rem;
+
+            padding-top: 1rem;
+
+        }
+
+        .spinner {
+
+            border: 4px solid rgba(0, 0, 0, 0.1);
+
+            border-top: 4px solid #fff;
+
+            border-radius: 50%;
+
+            width: 16px;
+
+            height: 16px;
+
+            animation: spin 1s linear infinite;
+
+            display: inline-block;
+
+            vertical-align: middle;
+
+            margin-right: 0.5rem;
+
+        }
+
+        @keyframes spin {
+
+            0% { transform: rotate(0deg); }
+
+            100% { transform: rotate(360deg); }
+
+        }
+
+        /* Garantindo que o botão full ocupe o espaço */
+
+        .btn-full {
+
+            width: 100%;
+
+        }
+
+        /* Estilo para a opção de pagamento selecionada/card (se estiver no seu CSS, pode remover daqui) */
+
+        .payment-method-card {
+
+            display: flex;
+
+            align-items: center;
+
+            padding: 1rem;
+
+            border: 1px solid var(--color-muted);
+
+            border-radius: 0.5rem;
+
+            cursor: pointer;
+
+            transition: border-color 0.2s;
+
+        }
+
+        .payment-method-card.selected {
+
+            border-color: var(--color-primary);
+
+            background-color: #eff6ff; /* Exemplo: light blue background for selected */
+
+        }
+
+        .payment-method-card input[type="radio"] {
+
+            margin-right: 1rem;
+
+        }
+
+    </style>
+
 </head>
+
 <body>
+
     <header class="header">
+
         <div class="container">
+
             <div class="header-content">
+
                 <a href="index.html" class="logo">PERFUMARIA RIVERS</a>
+
             </div>
+
         </div>
+
     </header>
 
+
+
     <main>
+
         <div class="page-header">
+
             <div class="container">
+
                 <h1 class="page-title">Finalizar Compra</h1>
+
             </div>
+
         </div>
 
+
+
         <section class="section">
+
             <div class="container">
+
                 <div class="checkout-layout">
+
                     <div>
+
                         <form id="checkoutForm">
-                            <!-- Delivery information section -->
+
                             <div class="checkout-section">
+
                                 <h3 class="section-heading">📦 Dados de Entrega</h3>
+
                                 <div class="form-group">
+
                                     <label class="form-label">CEP</label>
+
                                     <input type="text" class="form-input" id="cep" placeholder="00000-000" required>
+
                                     <button type="button" class="btn btn-secondary" style="margin-top: 0.5rem;" onclick="calcularFrete()">Calcular Frete</button>
+
                                 </div>
+
                                 <div id="freteResult" style="margin-top: 1rem;"></div>
+
                                 <div class="form-grid">
+
                                     <div class="form-group">
+
                                         <label class="form-label">Nome Completo</label>
+
                                         <input type="text" class="form-input" id="nome" required>
+
                                     </div>
+
                                     <div class="form-group">
-                                        <label class="form-label">Telefone</label>
-                                        <input type="tel" class="form-input" id="telefone" placeholder="(00) 00000-0000" required>
+
+                                        <label class="form-label">E-mail</label>
+
+                                        <input type="email" class="form-input" id="email" required>
+
                                     </div>
+
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Endereço</label>
-                                    <input type="text" class="form-input" id="endereco" required>
-                                </div>
+
                                 <div class="form-grid">
+
                                     <div class="form-group">
+
+                                        <label class="form-label">CPF</label>
+
+                                        <input type="text" class="form-input" id="cpf" placeholder="000.000.000-00" required>
+
+                                    </div>
+
+                                    <div class="form-group">
+
+                                        <label class="form-label">Telefone</label>
+
+                                        <input type="tel" class="form-input" id="telefone" placeholder="(00) 00000-0000" required>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="form-group">
+
+                                    <label class="form-label">Endereço</label>
+
+                                    <input type="text" class="form-input" id="endereco" required>
+
+                                </div>
+
+                                <div class="form-grid">
+
+                                    <div class="form-group">
+
                                         <label class="form-label">Cidade</label>
+
                                         <input type="text" class="form-input" id="cidade" required>
+
                                     </div>
+
                                     <div class="form-group">
+
                                         <label class="form-label">Estado</label>
+
                                         <input type="text" class="form-input" id="estado" maxlength="2" placeholder="SP" required>
+
                                     </div>
+
                                 </div>
+
                             </div>
 
-                            <!-- Enhanced payment section with better UI -->
+
+
                             <div class="checkout-section">
+
                                 <h3 class="section-heading">💳 Forma de Pagamento</h3>
+
                                 <div class="radio-group">
-                                    <label class="radio-label payment-method-card" id="pixOption">
-                                        <input type="radio" name="payment" value="pix" checked onchange="showPaymentForm()">
+
+                                    <label class="radio-label payment-method-card selected" id="checkoutOption">
+
+                                        <input type="radio" name="payment" value="checkout" checked>
+
                                         <div style="flex: 1;">
-                                            <strong>PIX</strong>
-                                            <div style="font-size: 0.875rem; color: var(--color-muted-foreground);">✓ Aprovação imediata</div>
+
+                                            <strong>Pagamento Seguro Mercado Pago</strong>
+
+                                            <div style="font-size: 0.875rem; color: var(--color-muted-foreground);">PIX, Cartão de Crédito e mais</div>
+
                                         </div>
+
                                     </label>
-                                    <label class="radio-label payment-method-card" id="creditOption">
-                                        <input type="radio" name="payment" value="credit" onchange="showPaymentForm()">
-                                        <div style="flex: 1;">
-                                            <strong>Cartão de Crédito</strong>
-                                            <div style="font-size: 0.875rem; color: var(--color-muted-foreground);">✓ Em até 6x sem juros</div>
-                                        </div>
-                                    </label>
+
                                 </div>
 
-                                <!-- Credit card form with improved styling -->
-                                <div id="creditCardForm" style="display: none; margin-top: 1.5rem;">
-                                    <div class="form-group">
-                                        <label class="form-label">Número do Cartão</label>
-                                        <div class="card-input-wrapper">
-                                            <input type="text" class="form-input" id="cardNumber" placeholder="0000 0000 0000 0000" maxlength="19">
-                                            <span class="card-brand-icon" id="cardBrandIcon"></span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Nome no Cartão</label>
-                                        <input type="text" class="form-input" id="cardName" placeholder="Nome como está no cartão" style="text-transform: uppercase;">
-                                    </div>
-                                    <div class="form-grid">
-                                        <div class="form-group">
-                                            <label class="form-label">Validade</label>
-                                            <input type="text" class="form-input" id="cardExpiry" placeholder="MM/AA" maxlength="5">
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="form-label">CVV</label>
-                                            <input type="text" class="form-input" id="cardCVV" placeholder="000" maxlength="3">
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Parcelas</label>
-                                        <select class="form-input" id="installments">
-                                            <option value="1">1x de R$ <span id="installment1">0,00</span> sem juros</option>
-                                            <option value="2">2x de R$ <span id="installment2">0,00</span> sem juros</option>
-                                            <option value="3">3x de R$ <span id="installment3">0,00</span> sem juros</option>
-                                            <option value="4">4x de R$ <span id="installment4">0,00</span> sem juros</option>
-                                            <option value="5">5x de R$ <span id="installment5">0,00</span> sem juros</option>
-                                            <option value="6">6x de R$ <span id="installment6">0,00</span> sem juros</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <!-- PIX payment area with improved UI -->
-                                <div id="pixPayment" style="display: none; margin-top: 1.5rem;"></div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-full" id="submitBtn">Confirmar Pedido</button>
+
+
+                            <button type="submit" class="btn btn-primary btn-full" id="submitBtn">
+
+                                Ir para Pagamento Seguro
+
+                            </button>
+
                         </form>
+
                     </div>
+
+
 
                     <div class="cart-summary">
+
                         <h3 style="margin-bottom: 1.5rem;">Resumo do Pedido</h3>
+
                         <div id="orderSummary"></div>
+
                     </div>
+
                 </div>
+
             </div>
+
         </section>
+
     </main>
 
+
+
     <script src="data.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js"></script> 
     <script>
-        // SUBSTITUA 'SUA_PUBLIC_KEY_AQUI' pela sua chave pública do Mercado Pago
-        const mp = new MercadoPago('APP_USR-18ea16ce-4d68-4769-bdd1-d8676d3dcc5e', {
-            locale: 'pt-BR'
-        });
+        const MERCADOPAGO_PUBLIC_KEY = 'APP_USR-18ea16ce-4d68-4769-bdd1-d8676d3dcc5e';
+        const BACKEND_URL = 'http://localhost:3001';
+        
+        const mp = new MercadoPago(MERCADOPAGO_PUBLIC_KEY, { locale: 'pt-BR' });
 
         let freteValue = 0;
 
+        // Função para renderizar o resumo do pedido usando a classe Cart do seu script.js
         function renderOrderSummary() {
             const container = document.getElementById('orderSummary');
-            const subtotal = cart.getTotal();
+            if (!container) return;
+
+            // IMPORTANTE: 'cart' é a instância global criada no seu script.js
+            const subtotal = cart.getTotal(); 
             const total = subtotal + freteValue;
 
-            container.innerHTML = `
-                <div class="summary-row">
-                    <span>Subtotal</span>
-                    <span>R$ ${subtotal.toFixed(2)}</span>
-                </div>
-                <div class="summary-row">
-                    <span>Frete</span>
-                    <span>${freteValue > 0 ? 'R$ ' + freteValue.toFixed(2) : 'A calcular'}</span>
-                </div>
-                <div class="summary-row summary-total">
-                    <span>Total</span>
-                    <span>R$ ${total.toFixed(2)}</span>
-                </div>
-            `;
-
-            // Update installment values
-            updateInstallmentValues(total);
-        }
-
-        function updateInstallmentValues(total) {
-            for (let i = 1; i <= 6; i++) {
-                const installmentValue = (total / i).toFixed(2);
-                const option = document.querySelector(`#installments option[value="${i}"]`);
-                if (option) {
-                    option.textContent = `${i}x de R$ ${installmentValue} sem juros`;
-                }
-            }
-        }
-
-        function calcularFrete() {
-            const cep = document.getElementById('cep').value;
-            if (!cep) {
-                alert('Por favor, informe o CEP');
-                return;
-            }
-
-            // Simula cálculo de frete
-            freteValue = Math.random() * 30 + 15;
+            let itemsHtml = '<div style="margin-bottom: 1rem;">';
             
+            // No seu script.js, cada item já possui a propriedade 'name'
+            cart.items.forEach(item => {
+                itemsHtml += `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem;">
+                        <span>${item.name || 'Produto'} (${item.size}) x${item.quantity}</span>
+                        <span>R$ ${(item.price * item.quantity).toFixed(2)}</span>
+                    </div>
+                `;
+            });
+            itemsHtml += '</div>';
+
+            container.innerHTML = itemsHtml + `
+                <div class="summary-row"><span>Subtotal</span><span>R$ ${subtotal.toFixed(2)}</span></div>
+                <div class="summary-row"><span>Frete</span><span>${freteValue > 0 ? 'R$ ' + freteValue.toFixed(2) : 'A calcular'}</span></div>
+                <div class="summary-row summary-total"><span>Total</span><span>R$ ${total.toFixed(2)}</span></div>
+            `;
+        }
+
+        // Função de Frete
+        window.calcularFrete = function() {
+            const cep = document.getElementById('cep').value;
+            if (!cep) { alert('Por favor, informe o CEP'); return; }
+            freteValue = 25.00; // Valor fixo para teste
             document.getElementById('freteResult').innerHTML = `
                 <div style="padding: 1rem; background: #f0fdf4; border: 1px solid #22c55e; border-radius: 0.5rem;">
-                    <strong style="color: #16a34a;">✓ Frete calculado:</strong> R$ ${freteValue.toFixed(2)}<br>
-                    <span style="font-size: 0.875rem; color: #16a34a;">📦 Prazo de entrega: 5-10 dias úteis</span>
+                    <strong style="color: #16a34a;">Frete calculado:</strong> R$ ${freteValue.toFixed(2)}
+                </div>`;
+            renderOrderSummary();
+        };
+
+        // Funções auxiliares para exibir o PIX
+        function showPixPayment(pixData, totalAmount) {
+            const form = document.getElementById('checkoutForm');
+            const pixCode = pixData.point_of_interaction.transaction_data.qr_code;
+            const qrCodeBase64 = pixData.point_of_interaction.transaction_data.qr_code_base64;
+            
+            form.innerHTML = `
+                <div class="checkout-section" style="text-align: center;">
+                    <h3 class="section-heading">✅ Pagamento PIX Gerado</h3>
+                    <div style="background: white; padding: 2rem; border-radius: 0.5rem; margin: 1.5rem 0;">
+                        <img src="data:image/png;base64,${qrCodeBase64}" alt="QR Code PIX" style="width: 250px; height: 250px; margin: 0 auto; display: block;"/>
+                    </div>
+                    <div style="background: var(--color-muted); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; word-break: break-all; font-family: monospace; font-size: 0.75rem;">
+                        ${pixCode}
+                    </div>
+                    <button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText('${pixCode}').then(() => alert('Código Copiado!'))" style="margin-bottom: 1rem; width:100%;">
+                        📋 Copiar Código PIX
+                    </button>
+                    <button type="button" class="btn btn-primary btn-full" onclick="location.reload()">
+                        Voltar / Novo Pedido
+                    </button>
                 </div>
             `;
-
-            renderOrderSummary();
         }
 
-        function showPaymentForm() {
-            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-            const creditCardForm = document.getElementById('creditCardForm');
-            const pixPayment = document.getElementById('pixPayment');
-            const pixOption = document.getElementById('pixOption');
-            const creditOption = document.getElementById('creditOption');
-            
-            // Update card selection visual
-            pixOption.classList.toggle('selected', paymentMethod === 'pix');
-            creditOption.classList.toggle('selected', paymentMethod === 'credit');
-            
-            if (paymentMethod === 'credit') {
-                creditCardForm.style.display = 'block';
-                pixPayment.style.display = 'none';
-            } else {
-                creditCardForm.style.display = 'none';
-                pixPayment.style.display = 'none';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const cardNumber = document.getElementById('cardNumber');
-            if (cardNumber) {
-                cardNumber.addEventListener('input', (e) => {
-                    let value = e.target.value.replace(/\s/g, '');
-                    let matched = value.match(/.{1,4}/g);
-                    let formattedValue = matched ? matched.join(' ') : value;
-                    e.target.value = formattedValue;
-
-                    // Detect card brand
-                    const brandIcon = document.getElementById('cardBrandIcon');
-                    if (value.startsWith('4')) {
-                        brandIcon.textContent = '💳 Visa';
-                    } else if (value.startsWith('5')) {
-                        brandIcon.textContent = '💳 Mastercard';
-                    } else if (value.startsWith('3')) {
-                        brandIcon.textContent = '💳 Amex';
-                    } else {
-                        brandIcon.textContent = '';
-                    }
-                });
-            }
-
-            const cardExpiry = document.getElementById('cardExpiry');
-            if (cardExpiry) {
-                cardExpiry.addEventListener('input', (e) => {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length >= 2) {
-                        value = value.slice(0, 2) + '/' + value.slice(2, 4);
-                    }
-                    e.target.value = value;
-                });
-            }
-
-            // Initialize payment method selection
-            showPaymentForm();
-        });
-
+        // Processamento do formulário
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (freteValue === 0) {
-                alert('❌ Por favor, calcule o frete antes de finalizar');
-                return;
+            if (cart.items.length === 0) {
+                 alert('Seu carrinho está vazio.');
+                 return;
             }
 
-            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
             const submitBtn = document.getElementById('submitBtn');
-            
-            if (paymentMethod === 'credit') {
-                const cardData = {
-                    number: document.getElementById('cardNumber').value.replace(/\s/g, ''),
-                    name: document.getElementById('cardName').value,
-                    expiry: document.getElementById('cardExpiry').value,
-                    cvv: document.getElementById('cardCVV').value,
-                    installments: document.getElementById('installments').value
-                };
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Processando...';
 
-                if (!cardData.number || !cardData.name || !cardData.expiry || !cardData.cvv) {
-                    alert('❌ Por favor, preencha todos os dados do cartão');
-                    return;
-                }
+            try {
+                const totalAmount = cart.getTotal() + freteValue;
+                const description = cart.items.map(i => `${i.name} x${i.quantity}`).join(', ');
 
-                if (cardData.number.length !== 16) {
-                    alert('❌ Número do cartão inválido');
-                    return;
-                }
-
-                submitBtn.classList.add('btn-loading');
-                submitBtn.textContent = 'Processando...';
-                submitBtn.disabled = true;
-                showProcessingOverlay('Processando pagamento...');
-
-                try {
-                    // Split expiry date
-                    const [month, year] = cardData.expiry.split('/');
-                    
-                    // Create payment data for Mercado Pago
-                    const paymentData = {
-                        transaction_amount: cart.getTotal() + freteValue,
-                        token: await createCardToken(cardData, month, year),
-                        description: 'Compra na Perfumaria Rivers',
-                        installments: parseInt(cardData.installments),
-                        payment_method_id: getPaymentMethodId(cardData.number),
+                const response = await fetch(`${BACKEND_URL}/api/create-pix`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        transaction_amount: totalAmount,
+                        description: description,
                         payer: {
-                            email: 'cliente@email.com', // Get from form
-                            identification: {
-                                type: 'CPF',
-                                number: '12345678900' // Get from form
-                            }
+                            email: document.getElementById('email').value,
+                            first_name: document.getElementById('nome').value.split(' ')[0],
+                            last_name: document.getElementById('nome').value.split(' ').slice(1).join(' ') || 'Cliente'
                         }
-                    };
+                    })
+                });
 
-                    // Call your backend to process payment
-                    const response = await processPayment(paymentData);
-                    
-                    hideProcessingOverlay();
-                    
-                    if (response.status === 'approved') {
-                        localStorage.setItem('orderData', JSON.stringify({
-                            total: cart.getTotal() + freteValue,
-                            paymentMethod: `Cartão de Crédito (${cardData.installments}x)`,
-                            status: 'approved',
-                            installments: cardData.installments,
-                            orderId: response.id
-                        }));
-                        cart.clear();
-                        window.location.href = 'confirmacao.html';
-                    } else {
-                        throw new Error('Pagamento não aprovado');
-                    }
-                } catch (error) {
-                    hideProcessingOverlay();
-                    alert('❌ Erro ao processar pagamento: ' + error.message);
-                    submitBtn.classList.remove('btn-loading');
-                    submitBtn.textContent = 'Confirmar Pedido';
-                    submitBtn.disabled = false;
+                const pixData = await response.json();
+                if (pixData.point_of_interaction) {
+                    showPixPayment(pixData, totalAmount);
+                } else {
+                    throw new Error('Erro na resposta do servidor');
                 }
 
-            } else {
-                submitBtn.style.display = 'none';
-                await generateRealPixPayment();
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao processar pagamento: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Ir para Pagamento Seguro';
             }
         });
 
-        async function createCardToken(cardData, month, year) {
-            try {
-                const cardToken = await mp.createCardToken({
-                    cardNumber: cardData.number,
-                    cardholderName: cardData.name,
-                    cardExpirationMonth: month,
-                    cardExpirationYear: '20' + year,
-                    securityCode: cardData.cvv,
-                    identificationType: 'CPF',
-                    identificationNumber: '12345678900' // Get from form
-                });
-                return cardToken.id;
-            } catch (error) {
-                throw new Error('Erro ao criar token do cartão');
-            }
-        }
-
-        function getPaymentMethodId(cardNumber) {
-            const firstDigit = cardNumber.charAt(0);
-            if (firstDigit === '4') return 'visa';
-            if (firstDigit === '5') return 'master';
-            if (firstDigit === '3') return 'amex';
-            return 'visa';
-        }
-
-        async function processPayment(paymentData) {
-            try {
-                const response = await fetch('http://localhost:3001/api/process-payment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Erro ao processar pagamento');
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Erro:', error);
-                throw error;
-            }
-        }
-
-        async function generateRealPixPayment() {
-            const total = cart.getTotal() + freteValue;
-            
-            showProcessingOverlay('Gerando código PIX...');
-            
-            try {
-                const pixData = {
-                    transaction_amount: total,
-                    description: 'Compra na Perfumaria Rivers',
-                    payment_method_id: 'pix',
-                    payer: {
-                        email: 'cliente@email.com' // Get from form
-                    }
-                };
-
-                const response = await createPixPayment(pixData);
-                
-                hideProcessingOverlay();
-                
-                const pixPayment = document.getElementById('pixPayment');
-                pixPayment.innerHTML = `
-                    <div class="pix-payment-box">
-                        <h3 style="margin-bottom: 1rem; color: #16a34a;">💚 Pague com PIX</h3>
-                        <p style="font-size: 0.875rem; color: #16a34a; margin-bottom: 1.5rem;">
-                            Escaneie o QR Code ou copie o código PIX
-                        </p>
-                        <div class="pix-qr-container">
-                            <img src="${response.point_of_interaction.transaction_data.qr_code_base64}" alt="QR Code PIX" style="width: 200px; height: 200px;">
-                        </div>
-                        <p style="font-size: 1.5rem; font-weight: 700; margin: 1rem 0; color: #16a34a;">
-                            R$ ${total.toFixed(2)}
-                        </p>
-                        <div class="pix-code-box" id="pixCodeBox">${response.point_of_interaction.transaction_data.qr_code}</div>
-                        <button type="button" class="btn btn-secondary btn-full" onclick="copyPixCode('${response.point_of_interaction.transaction_data.qr_code}')" id="copyBtn">
-                            📋 Copiar Código PIX
-                        </button>
-                        <div class="pix-status">
-                            <span class="pix-pulse"></span>
-                            Aguardando pagamento...
-                        </div>
-                        <p style="font-size: 0.75rem; color: var(--color-muted-foreground); margin-top: 1rem;">
-                            O pagamento será confirmado automaticamente após a aprovação.
-                        </p>
-                    </div>
-                `;
-                pixPayment.style.display = 'block';
-                
-                // Poll for payment status
-                checkPixPaymentStatus(response.id);
-                
-            } catch (error) {
-                hideProcessingOverlay();
-                alert('❌ Erro ao gerar PIX: ' + error.message);
-            }
-        }
-
-        async function createPixPayment(pixData) {
-            try {
-                const response = await fetch('http://localhost:3001/api/create-pix', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(pixData)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Erro ao criar PIX');
-                }
-
-                return await response.json();
-            } catch (error) {
-                console.error('Erro:', error);
-                throw error;
-            }
-        }
-
-        function checkPixPaymentStatus(paymentId) {
-            const interval = setInterval(async () => {
-                try {
-                    const response = await fetch(`http://localhost:3001/api/check-payment/${paymentId}`);
-                    const data = await response.json();
-                    
-                    if (data.status === 'approved') {
-                        clearInterval(interval);
-                        localStorage.setItem('orderData', JSON.stringify({
-                            total: cart.getTotal() + freteValue,
-                            paymentMethod: 'PIX',
-                            status: 'approved',
-                            orderId: paymentId
-                        }));
-                        cart.clear();
-                        window.location.href = 'confirmacao.html';
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar pagamento:', error);
-                }
-            }, 5000); // Check every 5 seconds
-        }
-
-        function copyPixCode(code) {
-            navigator.clipboard.writeText(code).then(() => {
-                const copyBtn = document.getElementById('copyBtn');
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '✓ Copiado!';
-                copyBtn.style.background = '#22c55e';
-                copyBtn.style.color = 'white';
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.style.background = '';
-                    copyBtn.style.color = '';
-                }, 2000);
-            });
-        }
-
-        function showProcessingOverlay(message) {
-            const overlay = document.createElement('div');
-            overlay.className = 'processing-overlay';
-            overlay.id = 'processingOverlay';
-            overlay.innerHTML = `
-                <div class="processing-box">
-                    <div class="processing-spinner"></div>
-                    <h3 style="margin-bottom: 0.5rem;">${message}</h3>
-                    <p style="color: var(--color-muted-foreground); font-size: 0.875rem;">Isso pode levar alguns segundos...</p>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-        }
-
-        function hideProcessingOverlay() {
-            const overlay = document.getElementById('processingOverlay');
-            if (overlay) {
-                overlay.remove();
-            }
-        }
-
+        // Inicializa a tela
         renderOrderSummary();
     </script>
 </body>

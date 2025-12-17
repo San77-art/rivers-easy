@@ -1,3 +1,5 @@
+// data.js - Apenas Banco de Dados de Produtos e Marcas
+
 const products = [
     {
         id: 1,
