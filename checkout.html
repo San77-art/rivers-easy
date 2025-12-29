@@ -159,7 +159,6 @@
     </main>
 
     <script src="data.js"></script>
-    <script src="script.js"></script> 
     <script>
         const MERCADOPAGO_PUBLIC_KEY = 'APP_USR-18ea16ce-4d68-4769-bdd1-d8676d3dcc5e';
         const BACKEND_URL = 'https://rivers-easy.onrender.com';
@@ -167,33 +166,49 @@
         const mp = new MercadoPago(MERCADOPAGO_PUBLIC_KEY, { locale: 'pt-BR' });
 
         let freteValue = 0;
+        let localCartItems = [];
 
-        // FUNÇÃO PARA GARANTIR QUE O CARRINHO ESTÁ CARREGADO DO LOCALSTORAGE
-        function syncCart() {
-            const saved = localStorage.getItem("cart");
-            if (saved && window.cart) {
-                window.cart.items = JSON.parse(saved);
+        // 1. CARREGAMENTO BLINDADO DO LOCALSTORAGE
+        function loadCartData() {
+            try {
+                const saved = localStorage.getItem("cart");
+                if (saved) {
+                    localCartItems = JSON.parse(saved);
+                    console.log("Produtos no Carrinho:", localCartItems);
+                }
+            } catch (e) {
+                console.error("Erro ao ler localStorage:", e);
+                localCartItems = [];
             }
         }
 
+        // 2. CÁLCULO DE TOTAL MANUAL
+        function getCartTotal() {
+            return localCartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+
         function renderOrderSummary() {
-            syncCart(); // Sincroniza antes de renderizar
+            loadCartData();
             const container = document.getElementById('orderSummary');
-            if (!container || !window.cart) return;
+            if (!container) return;
 
-            const subtotal = cart.getTotal(); 
-            const total = subtotal + freteValue;
-
-            if (cart.items.length === 0) {
-                container.innerHTML = '<p>Seu carrinho está vazio.</p>';
+            if (!localCartItems || localCartItems.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 20px; border: 1px solid #fee2e2; background: #fef2f2; border-radius: 8px; color: #b91c1c;">
+                        <strong>Carrinho Vazio</strong><br>
+                        Por favor, volte à página inicial e adicione um perfume.
+                    </div>`;
                 return;
             }
 
+            const subtotal = getCartTotal();
+            const total = subtotal + freteValue;
+
             let itemsHtml = '<div style="margin-bottom: 1rem;">';
-            cart.items.forEach(item => {
+            localCartItems.forEach(item => {
                 itemsHtml += `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem;">
-                        <span>${item.name || 'Produto'} (${item.size}) x${item.quantity}</span>
+                        <span>${item.name || 'Perfume'} (${item.size || 'Unico'}) x${item.quantity}</span>
                         <span>R$ ${(item.price * item.quantity).toFixed(2)}</span>
                     </div>
                 `;
@@ -229,37 +244,35 @@
                     <div style="background: white; padding: 2rem; border-radius: 0.5rem; margin: 1.5rem 0;">
                         <img src="data:image/png;base64,${qrCodeBase64}" alt="QR Code PIX" style="width: 250px; height: 250px; margin: 0 auto; display: block;"/>
                     </div>
-                    <div style="background: var(--color-muted); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; word-break: break-all; font-family: monospace; font-size: 0.75rem;">
+                    <p>Escaneie o QR Code ou copie a chave abaixo:</p>
+                    <div style="background: var(--color-muted); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; word-break: break-all; font-family: monospace; font-size: 0.75rem; border: 1px solid #ccc;">
                         ${pixCode}
                     </div>
                     <button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText('${pixCode}').then(() => alert('Código Copiado!'))" style="margin-bottom: 1rem; width:100%;">
                         📋 Copiar Código PIX
                     </button>
-                    <button type="button" class="btn btn-primary btn-full" onclick="location.reload()">
-                        Voltar / Novo Pedido
-                    </button>
+                    <p style="font-size: 0.8rem; color: #666;">Após o pagamento, o seu pedido será processado automaticamente.</p>
                 </div>
             `;
-            // Opcional: Limpar carrinho após gerar o PIX
-            if (window.cart) cart.clear();
+            localStorage.removeItem("cart"); 
         }
 
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            syncCart(); // Garante que temos os itens antes de enviar
+            loadCartData();
             
-            if (!window.cart || cart.items.length === 0) {
-                 alert('Seu carrinho está vazio.');
+            if (localCartItems.length === 0) {
+                 alert('O seu carrinho está vazio. Adicione um produto antes de continuar.');
                  return;
             }
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner"></span> Processando...';
+            submitBtn.innerHTML = '<span class="spinner"></span> Criando PIX...';
 
             try {
-                const totalAmount = cart.getTotal() + freteValue;
-                const description = cart.items.map(i => `${i.name} x${i.quantity}`).join(', ');
+                const totalAmount = getCartTotal() + freteValue;
+                const description = localCartItems.map(i => `${i.name} x${i.quantity}`).join(', ');
                 const full_name = document.getElementById('nome').value;
 
                 const response = await fetch(`${BACKEND_URL}/api/create-pix`, {
@@ -285,22 +298,19 @@
                 if (response.ok && pixData.point_of_interaction) {
                     showPixPayment(pixData);
                 } else {
-                    const errorMsg = pixData.message || 'Erro na resposta do servidor';
-                    throw new Error(errorMsg);
+                    throw new Error(pixData.message || 'Erro ao gerar PIX no servidor');
                 }
 
             } catch (error) {
-                console.error('Erro Detalhado:', error);
+                console.error('Erro:', error);
                 alert('Erro ao processar pagamento: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Ir para Pagamento Seguro';
             }
         });
 
-        // Inicialização: espera um pouco para o script.js carregar o objeto global cart
-        window.addEventListener('load', () => {
-            renderOrderSummary();
-        });
+        // Executar renderização inicial
+        renderOrderSummary();
     </script>
 </body>
 </html>
