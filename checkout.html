@@ -168,12 +168,26 @@
 
         let freteValue = 0;
 
+        // FUNÇÃO PARA GARANTIR QUE O CARRINHO ESTÁ CARREGADO DO LOCALSTORAGE
+        function syncCart() {
+            const saved = localStorage.getItem("cart");
+            if (saved && window.cart) {
+                window.cart.items = JSON.parse(saved);
+            }
+        }
+
         function renderOrderSummary() {
+            syncCart(); // Sincroniza antes de renderizar
             const container = document.getElementById('orderSummary');
             if (!container || !window.cart) return;
 
             const subtotal = cart.getTotal(); 
             const total = subtotal + freteValue;
+
+            if (cart.items.length === 0) {
+                container.innerHTML = '<p>Seu carrinho está vazio.</p>';
+                return;
+            }
 
             let itemsHtml = '<div style="margin-bottom: 1rem;">';
             cart.items.forEach(item => {
@@ -226,10 +240,13 @@
                     </button>
                 </div>
             `;
+            // Opcional: Limpar carrinho após gerar o PIX
+            if (window.cart) cart.clear();
         }
 
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            syncCart(); // Garante que temos os itens antes de enviar
             
             if (!window.cart || cart.items.length === 0) {
                  alert('Seu carrinho está vazio.');
@@ -280,7 +297,10 @@
             }
         });
 
-        renderOrderSummary();
+        // Inicialização: espera um pouco para o script.js carregar o objeto global cart
+        window.addEventListener('load', () => {
+            renderOrderSummary();
+        });
     </script>
 </body>
 </html>
