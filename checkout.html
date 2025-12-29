@@ -1,351 +1,181 @@
 <!DOCTYPE html>
-
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Checkout - Perfumaria Rivers</title>
-
     <link rel="stylesheet" href="styles.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
-
     <script src="https://sdk.mercadopago.com/js/v2"></script>
-
     <style>
-
-        /* Estilos adicionais para a funcionalidade (spinner e cores) */
-
         :root {
-
-            --color-primary: #3b82f6; /* Exemplo: Azul */
-
+            --color-primary: #3b82f6;
             --color-primary-hover: #2563eb;
-
-            --color-muted: #f3f4f6; /* Exemplo: Cinza Claro */
-
-            --color-muted-foreground: #6b7280; /* Exemplo: Cinza Médio */
-
+            --color-muted: #f3f4f6;
+            --color-muted-foreground: #6b7280;
         }
-
         .summary-row {
-
             display: flex;
-
             justify-content: space-between;
-
             padding: 0.5rem 0;
-
             border-bottom: 1px dashed #e5e7eb;
-
             font-size: 0.875rem;
-
         }
-
         .summary-total {
-
             font-size: 1.125rem;
-
             font-weight: 600;
-
             border-top: 2px solid #333;
-
             border-bottom: none;
-
             margin-top: 1rem;
-
             padding-top: 1rem;
-
         }
-
         .spinner {
-
             border: 4px solid rgba(0, 0, 0, 0.1);
-
             border-top: 4px solid #fff;
-
             border-radius: 50%;
-
             width: 16px;
-
             height: 16px;
-
             animation: spin 1s linear infinite;
-
             display: inline-block;
-
             vertical-align: middle;
-
             margin-right: 0.5rem;
-
         }
-
         @keyframes spin {
-
             0% { transform: rotate(0deg); }
-
             100% { transform: rotate(360deg); }
-
         }
-
-        /* Garantindo que o botão full ocupe o espaço */
-
-        .btn-full {
-
-            width: 100%;
-
-        }
-
-        /* Estilo para a opção de pagamento selecionada/card (se estiver no seu CSS, pode remover daqui) */
-
+        .btn-full { width: 100%; }
         .payment-method-card {
-
             display: flex;
-
             align-items: center;
-
             padding: 1rem;
-
             border: 1px solid var(--color-muted);
-
             border-radius: 0.5rem;
-
             cursor: pointer;
-
             transition: border-color 0.2s;
-
         }
-
         .payment-method-card.selected {
-
             border-color: var(--color-primary);
-
-            background-color: #eff6ff; /* Exemplo: light blue background for selected */
-
+            background-color: #eff6ff;
         }
-
-        .payment-method-card input[type="radio"] {
-
-            margin-right: 1rem;
-
-        }
-
+        .payment-method-card input[type="radio"] { margin-right: 1rem; }
     </style>
-
 </head>
-
 <body>
-
     <header class="header">
-
         <div class="container">
-
             <div class="header-content">
-
                 <a href="index.html" class="logo">PERFUMARIA RIVERS</a>
-
             </div>
-
         </div>
-
     </header>
 
-
-
     <main>
-
         <div class="page-header">
-
             <div class="container">
-
                 <h1 class="page-title">Finalizar Compra</h1>
-
             </div>
-
         </div>
 
-
-
         <section class="section">
-
             <div class="container">
-
                 <div class="checkout-layout">
-
                     <div>
-
                         <form id="checkoutForm">
-
                             <div class="checkout-section">
-
                                 <h3 class="section-heading">📦 Dados de Entrega</h3>
-
                                 <div class="form-group">
-
                                     <label class="form-label">CEP</label>
-
                                     <input type="text" class="form-input" id="cep" placeholder="00000-000" required>
-
                                     <button type="button" class="btn btn-secondary" style="margin-top: 0.5rem;" onclick="calcularFrete()">Calcular Frete</button>
-
                                 </div>
-
                                 <div id="freteResult" style="margin-top: 1rem;"></div>
-
+                                
                                 <div class="form-grid">
-
                                     <div class="form-group">
-
                                         <label class="form-label">Nome Completo</label>
-
                                         <input type="text" class="form-input" id="nome" required>
-
                                     </div>
-
                                     <div class="form-group">
-
                                         <label class="form-label">E-mail</label>
-
                                         <input type="email" class="form-input" id="email" required>
-
                                     </div>
-
                                 </div>
-
+                                
                                 <div class="form-grid">
-
                                     <div class="form-group">
-
                                         <label class="form-label">CPF</label>
-
                                         <input type="text" class="form-input" id="cpf" placeholder="000.000.000-00" required>
-
                                     </div>
-
                                     <div class="form-group">
-
                                         <label class="form-label">Telefone</label>
-
                                         <input type="tel" class="form-input" id="telefone" placeholder="(00) 00000-0000" required>
-
                                     </div>
-
                                 </div>
-
+                                
                                 <div class="form-group">
-
                                     <label class="form-label">Endereço</label>
-
                                     <input type="text" class="form-input" id="endereco" required>
-
                                 </div>
-
+                                
                                 <div class="form-grid">
-
                                     <div class="form-group">
-
                                         <label class="form-label">Cidade</label>
-
                                         <input type="text" class="form-input" id="cidade" required>
-
                                     </div>
-
                                     <div class="form-group">
-
                                         <label class="form-label">Estado</label>
-
                                         <input type="text" class="form-input" id="estado" maxlength="2" placeholder="SP" required>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
-
 
                             <div class="checkout-section">
-
                                 <h3 class="section-heading">💳 Forma de Pagamento</h3>
-
                                 <div class="radio-group">
-
                                     <label class="radio-label payment-method-card selected" id="checkoutOption">
-
                                         <input type="radio" name="payment" value="checkout" checked>
-
                                         <div style="flex: 1;">
-
                                             <strong>Pagamento Seguro Mercado Pago</strong>
-
                                             <div style="font-size: 0.875rem; color: var(--color-muted-foreground);">PIX, Cartão de Crédito e mais</div>
-
                                         </div>
-
                                     </label>
-
                                 </div>
-
                             </div>
-
-
 
                             <button type="submit" class="btn btn-primary btn-full" id="submitBtn">
-
                                 Ir para Pagamento Seguro
-
                             </button>
-
                         </form>
-
                     </div>
-
-
 
                     <div class="cart-summary">
-
                         <h3 style="margin-bottom: 1.5rem;">Resumo do Pedido</h3>
-
                         <div id="orderSummary"></div>
-
                     </div>
-
                 </div>
-
             </div>
-
         </section>
-
     </main>
-
-
 
     <script src="data.js"></script>
     <script src="script.js"></script> 
     <script>
         const MERCADOPAGO_PUBLIC_KEY = 'APP_USR-18ea16ce-4d68-4769-bdd1-d8676d3dcc5e';
-        const BACKEND_URL = 'https://rivers-easy-1.onrender.com';
+        const BACKEND_URL = 'https://rivers-easy.onrender.com';
         
         const mp = new MercadoPago(MERCADOPAGO_PUBLIC_KEY, { locale: 'pt-BR' });
 
         let freteValue = 0;
 
-        // Função para renderizar o resumo do pedido usando a classe Cart do seu script.js
         function renderOrderSummary() {
             const container = document.getElementById('orderSummary');
-            if (!container) return;
+            if (!container || !window.cart) return;
 
-            // IMPORTANTE: 'cart' é a instância global criada no seu script.js
             const subtotal = cart.getTotal(); 
             const total = subtotal + freteValue;
 
             let itemsHtml = '<div style="margin-bottom: 1rem;">';
-            
-            // No seu script.js, cada item já possui a propriedade 'name'
             cart.items.forEach(item => {
                 itemsHtml += `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem;">
@@ -363,11 +193,10 @@
             `;
         }
 
-        // Função de Frete
         window.calcularFrete = function() {
             const cep = document.getElementById('cep').value;
             if (!cep) { alert('Por favor, informe o CEP'); return; }
-            freteValue = 25.00; // Valor fixo para teste
+            freteValue = 25.00; 
             document.getElementById('freteResult').innerHTML = `
                 <div style="padding: 1rem; background: #f0fdf4; border: 1px solid #22c55e; border-radius: 0.5rem;">
                     <strong style="color: #16a34a;">Frete calculado:</strong> R$ ${freteValue.toFixed(2)}
@@ -375,8 +204,7 @@
             renderOrderSummary();
         };
 
-        // Funções auxiliares para exibir o PIX
-        function showPixPayment(pixData, totalAmount) {
+        function showPixPayment(pixData) {
             const form = document.getElementById('checkoutForm');
             const pixCode = pixData.point_of_interaction.transaction_data.qr_code;
             const qrCodeBase64 = pixData.point_of_interaction.transaction_data.qr_code_base64;
@@ -400,11 +228,10 @@
             `;
         }
 
-        // Processamento do formulário
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            if (cart.items.length === 0) {
+            if (!window.cart || cart.items.length === 0) {
                  alert('Seu carrinho está vazio.');
                  return;
             }
@@ -416,6 +243,7 @@
             try {
                 const totalAmount = cart.getTotal() + freteValue;
                 const description = cart.items.map(i => `${i.name} x${i.quantity}`).join(', ');
+                const full_name = document.getElementById('nome').value;
 
                 const response = await fetch(`${BACKEND_URL}/api/create-pix`, {
                     method: 'POST',
@@ -425,28 +253,33 @@
                         description: description,
                         payer: {
                             email: document.getElementById('email').value,
-                            first_name: document.getElementById('nome').value.split(' ')[0],
-                            last_name: document.getElementById('nome').value.split(' ').slice(1).join(' ') || 'Cliente'
+                            first_name: full_name.split(' ')[0],
+                            last_name: full_name.split(' ').slice(1).join(' ') || 'Cliente',
+                            identification: {
+                                type: 'CPF',
+                                number: document.getElementById('cpf').value.replace(/\D/g, '')
+                            }
                         }
                     })
                 });
 
                 const pixData = await response.json();
-                if (pixData.point_of_interaction) {
-                    showPixPayment(pixData, totalAmount);
+
+                if (response.ok && pixData.point_of_interaction) {
+                    showPixPayment(pixData);
                 } else {
-                    throw new Error('Erro na resposta do servidor');
+                    const errorMsg = pixData.message || 'Erro na resposta do servidor';
+                    throw new Error(errorMsg);
                 }
 
             } catch (error) {
-                console.error('Erro:', error);
+                console.error('Erro Detalhado:', error);
                 alert('Erro ao processar pagamento: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Ir para Pagamento Seguro';
             }
         });
 
-        // Inicializa a tela
         renderOrderSummary();
     </script>
 </body>
