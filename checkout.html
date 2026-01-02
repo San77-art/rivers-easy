@@ -80,13 +80,13 @@
         <section class="section">
             <div class="container">
                 <div class="checkout-layout">
-                    <div>
+                    <div id="formContainer">
                         <form id="checkoutForm">
                             <div class="checkout-section">
                                 <h3 class="section-heading">📦 Dados de Entrega</h3>
                                 <div class="form-group">
                                     <label class="form-label">CEP</label>
-                                    <input type="text" class="form-input" id="cep" placeholder="00000-000" required>
+                                    <input type="text" class="form-input" id="cep" placeholder="00000-000" maxlength="9" required>
                                     <button type="button" class="btn btn-secondary" style="margin-top: 0.5rem;" onclick="calcularFrete()">Calcular Frete</button>
                                 </div>
                                 <div id="freteResult" style="margin-top: 1rem;"></div>
@@ -105,7 +105,7 @@
                                 <div class="form-grid">
                                     <div class="form-group">
                                         <label class="form-label">CPF</label>
-                                        <input type="text" class="form-input" id="cpf" placeholder="000.000.000-00" required>
+                                        <input type="text" class="form-input" id="cpf" placeholder="000.000.000-00" maxlength="14" required>
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Telefone</label>
@@ -133,7 +133,7 @@
                             <div class="checkout-section">
                                 <h3 class="section-heading">💳 Forma de Pagamento</h3>
                                 <div class="radio-group">
-                                    <label class="radio-label payment-method-card selected" id="checkoutOption">
+                                    <label class="radio-label payment-method-card selected">
                                         <input type="radio" name="payment" value="checkout" checked>
                                         <div style="flex: 1;">
                                             <strong>Pagamento Seguro Mercado Pago</strong>
@@ -149,7 +149,7 @@
                         </form>
                     </div>
 
-                    <div class="cart-summary">
+                    <div class="cart-summary" id="summaryContainer">
                         <h3 style="margin-bottom: 1.5rem;">Resumo do Pedido</h3>
                         <div id="orderSummary"></div>
                     </div>
@@ -162,27 +162,38 @@
     <script>
         const MERCADOPAGO_PUBLIC_KEY = 'APP_USR-18ea16ce-4d68-4769-bdd1-d8676d3dcc5e';
         const BACKEND_URL = 'https://rivers-easy.onrender.com';
-        
         const mp = new MercadoPago(MERCADOPAGO_PUBLIC_KEY, { locale: 'pt-BR' });
 
         let freteValue = 0;
         let localCartItems = [];
 
-        // 1. CARREGAMENTO BLINDADO DO LOCALSTORAGE
+        // --- MÁSCARAS DE INPUT (MELHORIA UX) ---
+        document.getElementById('cpf').addEventListener('input', e => {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 11) v = v.slice(0, 11);
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = v;
+        });
+
+        document.getElementById('cep').addEventListener('input', e => {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 8) v = v.slice(0, 8);
+            v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+            e.target.value = v;
+        });
+
+        // --- LÓGICA DO CARRINHO ---
         function loadCartData() {
             try {
                 const saved = localStorage.getItem("cart");
-                if (saved) {
-                    localCartItems = JSON.parse(saved);
-                    console.log("Produtos no Carrinho:", localCartItems);
-                }
+                localCartItems = saved ? JSON.parse(saved) : [];
             } catch (e) {
-                console.error("Erro ao ler localStorage:", e);
                 localCartItems = [];
             }
         }
 
-        // 2. CÁLCULO DE TOTAL MANUAL
         function getCartTotal() {
             return localCartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
         }
@@ -192,12 +203,8 @@
             const container = document.getElementById('orderSummary');
             if (!container) return;
 
-            if (!localCartItems || localCartItems.length === 0) {
-                container.innerHTML = `
-                    <div style="padding: 20px; border: 1px solid #fee2e2; background: #fef2f2; border-radius: 8px; color: #b91c1c;">
-                        <strong>Carrinho Vazio</strong><br>
-                        Por favor, volte à página inicial e adicione um perfume.
-                    </div>`;
+            if (localCartItems.length === 0) {
+                container.innerHTML = `<div style="padding: 1rem; background: #fef2f2; color: #b91c1c; border-radius: 0.5rem;">Seu carrinho está vazio.</div>`;
                 return;
             }
 
@@ -208,71 +215,85 @@
             localCartItems.forEach(item => {
                 itemsHtml += `
                     <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.875rem;">
-                        <span>${item.name || 'Perfume'} (${item.size || 'Unico'}) x${item.quantity}</span>
+                        <span>${item.name} x${item.quantity}</span>
                         <span>R$ ${(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                `;
+                    </div>`;
             });
             itemsHtml += '</div>';
 
             container.innerHTML = itemsHtml + `
                 <div class="summary-row"><span>Subtotal</span><span>R$ ${subtotal.toFixed(2)}</span></div>
                 <div class="summary-row"><span>Frete</span><span>${freteValue > 0 ? 'R$ ' + freteValue.toFixed(2) : 'A calcular'}</span></div>
-                <div class="summary-row summary-total"><span>Total</span><span>R$ ${total.toFixed(2)}</span></div>
+                <div class="summary-row summary-total"><span>Total</span><span style="color: #16a34a;">R$ ${total.toFixed(2)}</span></div>
             `;
         }
 
         window.calcularFrete = function() {
             const cep = document.getElementById('cep').value;
-            if (!cep) { alert('Por favor, informe o CEP'); return; }
+            if (cep.length < 9) { alert('Digite um CEP válido'); return; }
             freteValue = 25.00; 
             document.getElementById('freteResult').innerHTML = `
-                <div style="padding: 1rem; background: #f0fdf4; border: 1px solid #22c55e; border-radius: 0.5rem;">
-                    <strong style="color: #16a34a;">Frete calculado:</strong> R$ ${freteValue.toFixed(2)}
+                <div style="padding: 0.75rem; background: #f0fdf4; border: 1px solid #22c55e; border-radius: 0.5rem; color: #16a34a; font-size: 0.875rem;">
+                    <strong>Frete calculado:</strong> R$ 25,00 (Entrega em até 5 dias)
                 </div>`;
             renderOrderSummary();
         };
 
+        // --- INTERFACE DE SUCESSO (MELHORIA UX FULLSTACK) ---
         function showPixPayment(pixData) {
-            const form = document.getElementById('checkoutForm');
+            const layout = document.querySelector('.checkout-layout');
             const pixCode = pixData.point_of_interaction.transaction_data.qr_code;
             const qrCodeBase64 = pixData.point_of_interaction.transaction_data.qr_code_base64;
             
-            form.innerHTML = `
-                <div class="checkout-section" style="text-align: center;">
-                    <h3 class="section-heading">✅ Pagamento PIX Gerado</h3>
-                    <div style="background: white; padding: 2rem; border-radius: 0.5rem; margin: 1.5rem 0;">
-                        <img src="data:image/png;base64,${qrCodeBase64}" alt="QR Code PIX" style="width: 250px; height: 250px; margin: 0 auto; display: block;"/>
+            layout.innerHTML = `
+                <div style="width: 100%; max-width: 600px; margin: 2rem auto; background: white; padding: 2.5rem; border-radius: 1rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center;">
+                    <div style="background: #16a34a; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                        <span style="color: white; font-size: 2rem;">✓</span>
                     </div>
-                    <p>Escaneie o QR Code ou copie a chave abaixo:</p>
-                    <div style="background: var(--color-muted); padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; word-break: break-all; font-family: monospace; font-size: 0.75rem; border: 1px solid #ccc;">
-                        ${pixCode}
+                    <h2 style="font-family: 'Playfair Display', serif; font-size: 1.75rem; margin-bottom: 0.5rem;">Pedido Recebido!</h2>
+                    <p style="color: #64748b; margin-bottom: 2rem;">Escaneie o QR Code abaixo para pagar via PIX.</p>
+                    
+                    <div style="background: #f8fafc; padding: 2rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
+                        <img src="data:image/png;base64,${qrCodeBase64}" style="width: 220px; height: 220px; margin-bottom: 1rem;"/>
+                        <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 1.5rem;">Aguardando pagamento...</p>
+                        
+                        <div style="background: #fff; padding: 1rem; border-radius: 0.5rem; border: 1px dashed #cbd5e1; font-family: monospace; font-size: 0.75rem; word-break: break-all; margin-bottom: 1rem;">
+                            ${pixCode}
+                        </div>
+                        
+                        <button class="btn btn-primary" style="width: 100%;" onclick="copyToClipboard('${pixCode}')">
+                            📋 Copiar Código PIX
+                        </button>
                     </div>
-                    <button type="button" class="btn btn-secondary" onclick="navigator.clipboard.writeText('${pixCode}').then(() => alert('Código Copiado!'))" style="margin-bottom: 1rem; width:100%;">
-                        📋 Copiar Código PIX
-                    </button>
-                    <p style="font-size: 0.8rem; color: #666;">Após o pagamento, o seu pedido será processado automaticamente.</p>
+                    
+                    <p style="font-size: 0.8rem; color: #64748b;">Após o pagamento, você receberá a confirmação no e-mail cadastrado.</p>
+                    <a href="index.html" style="display: inline-block; margin-top: 1.5rem; color: var(--color-primary); text-decoration: none; font-weight: 500;">← Voltar para a Loja</a>
                 </div>
             `;
             localStorage.removeItem("cart"); 
         }
 
+        window.copyToClipboard = function(text) {
+            navigator.clipboard.writeText(text).then(() => alert('Código PIX copiado!'));
+        };
+
+        // --- SUBMISSÃO ---
         document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             loadCartData();
             
             if (localCartItems.length === 0) {
-                 alert('O seu carrinho está vazio. Adicione um produto antes de continuar.');
+                 alert('Carrinho vazio!');
                  return;
             }
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner"></span> Criando PIX...';
+            submitBtn.innerHTML = '<span class="spinner"></span> Processando Pedido...';
 
             try {
                 const totalAmount = getCartTotal() + freteValue;
-                const description = localCartItems.map(i => `${i.name} x${i.quantity}`).join(', ');
+                const description = localCartItems.map(i => `${i.name}`).join(', ');
                 const full_name = document.getElementById('nome').value;
 
                 const response = await fetch(`${BACKEND_URL}/api/create-pix`, {
@@ -280,7 +301,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         transaction_amount: totalAmount,
-                        description: description,
+                        description: `Rivers Store: ${description}`,
                         payer: {
                             email: document.getElementById('email').value,
                             first_name: full_name.split(' ')[0],
@@ -294,22 +315,16 @@
                 });
 
                 const pixData = await response.json();
-
-                if (response.ok && pixData.point_of_interaction) {
-                    showPixPayment(pixData);
-                } else {
-                    throw new Error(pixData.message || 'Erro ao gerar PIX no servidor');
-                }
+                if (response.ok) showPixPayment(pixData);
+                else throw new Error(pixData.message || 'Erro ao gerar pagamento');
 
             } catch (error) {
-                console.error('Erro:', error);
-                alert('Erro ao processar pagamento: ' + error.message);
+                alert('Erro: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Ir para Pagamento Seguro';
             }
         });
 
-        // Executar renderização inicial
         renderOrderSummary();
     </script>
 </body>
