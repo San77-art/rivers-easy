@@ -1,7 +1,7 @@
 // Importar dependências
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose"); // <-- NOVO: Importa o Mongoose
+const mongoose = require("mongoose");
 const { MercadoPagoConfig, Payment } = require('mercadopago');
 require("dotenv").config();
 
@@ -14,12 +14,11 @@ app.use(cors());
 app.use(express.json());
 
 // --- CONFIGURAÇÃO MONGODB ---
-// Conecta ao banco usando a variável que você configurou no Render
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log("✅ Conectado ao MongoDB com sucesso!"))
     .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
 
-// Definição do Modelo de Pedido (Como o dado será salvo no banco)
+// Definição do Modelo de Pedido
 const OrderSchema = new mongoose.Schema({
     cliente: String,
     email: String,
@@ -32,7 +31,6 @@ const OrderSchema = new mongoose.Schema({
 });
 
 const Order = mongoose.model('Order', OrderSchema);
-// ----------------------------
 
 // Configurar Mercado Pago
 const client = new MercadoPagoConfig({ 
@@ -42,7 +40,9 @@ const client = new MercadoPagoConfig({
 
 const paymentClient = new Payment(client);
 
-// Rota de teste
+// --- ROTAS DO SERVIDOR ---
+
+// 1. Rota de teste
 app.get("/", (req, res) => {
     res.json({
         message: "Backend Rivers Store - Ativo com MongoDB",
@@ -50,10 +50,9 @@ app.get("/", (req, res) => {
     });
 });
 
-// ROTA: Criar pagamento PIX (Atualizada para salvar no Banco)
+// 2. ROTA: Criar pagamento PIX e Salvar no Banco
 app.post("/api/create-pix", async (req, res) => {
     try {
-        console.log("📝 Recebendo requisição PIX:", req.body);
         const { transaction_amount, description, payer } = req.body;
 
         if (!transaction_amount || !payer?.email) {
@@ -77,8 +76,7 @@ app.post("/api/create-pix", async (req, res) => {
             }
         });
 
-        // --- SALVAMENTO NO BANCO DE DADOS ---
-        // Se o Mercado Pago gerou o PIX com sucesso, salvamos no nosso banco
+        // SALVAMENTO NO BANCO
         const novoPedido = new Order({
             cliente: (payer.first_name || "Cliente") + " " + (payer.last_name || ""),
             email: payer.email,
@@ -90,8 +88,7 @@ app.post("/api/create-pix", async (req, res) => {
         });
 
         await novoPedido.save();
-        console.log("💾 Pedido salvo no MongoDB com sucesso!");
-        // ------------------------------------
+        console.log(`💾 Pedido ${payment.id} salvo no MongoDB!`);
 
         res.json({
             id: payment.id,
@@ -109,8 +106,42 @@ app.post("/api/create-pix", async (req, res) => {
     }
 });
 
-// As outras rotas (check-payment e process-payment) permanecem iguais...
-// Mas você pode adicionar lógica de banco nelas no futuro se quiser!
+// 3. ROTA DE IMPACTO: Buscar pedidos por e-mail (O que impressiona!)
+app.get("/api/orders/:email", async (req, res) => {
+    try {
+        const { email } = req.params;
+        // Busca pedidos e ordena pelos mais recentes
+        const orders = await Order.find({ email: email.toLowerCase() }).sort({ data: -1 });
+        
+        console.log(`🔍 Pedidos buscados para: ${email} - Encontrados: ${orders.length}`);
+        res.json(orders);
+    } catch (error) {
+        console.error("❌ Erro ao buscar pedidos:", error);
+        res.status(500).json({ error: "Erro ao buscar histórico" });
+    }
+});
+
+// 4. ROTA: Verificar status e atualizar o banco automaticamente
+app.get("/api/check-payment/:paymentId", async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        const payment = await paymentClient.get({ id: parseInt(paymentId) });
+
+        // Atualiza o status no banco se ele mudar no Mercado Pago
+        await Order.findOneAndUpdate(
+            { mercadoPagoId: paymentId },
+            { status: payment.status }
+        );
+
+        res.json({
+            id: payment.id,
+            status: payment.status,
+            status_detail: payment.status_detail
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Erro ao verificar status" });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`🚀 Servidor rodando na porta ${PORT}`);
