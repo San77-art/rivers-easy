@@ -12,15 +12,28 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(express.json());
 
-// --- CONFIGURAÇÃO MONGODB ---
+// --- CONFIGURAÇÃO MONGODB (BLINDAGEM CONTRA TIMEOUT) ---
 const mongooseOptions = {
-    serverSelectionTimeoutMS: 5000, 
-    socketTimeoutMS: 45000,         
+    serverSelectionTimeoutMS: 10000, // Aumentado para 10s para dar tempo ao Render
+    connectTimeoutMS: 10000, 
+    socketTimeoutMS: 45000,
+    family: 4 // Força IPv4 (evita problemas de rede no Atlas)
 };
+
+// Desativa o buffer para que ele dê erro imediato se não houver conexão, 
+// em vez de travar o servidor por 10 segundos.
+mongoose.set('bufferCommands', false);
 
 mongoose.connect(process.env.MONGODB_URI, mongooseOptions)
     .then(() => console.log("✅ Conectado ao MongoDB com sucesso!"))
-    .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
+    .catch(err => {
+        console.error("❌ Erro CRÍTICO ao conectar ao MongoDB:", err.message);
+        // Não encerra o processo para permitir que o Render tente reconectar automaticamente
+    });
+
+// Monitoramento de eventos do banco
+mongoose.connection.on('error', err => console.error('⚠️ Erro na conexão MongoDB:', err));
+mongoose.connection.on('disconnected', () => console.log('🔌 MongoDB desconectado. Tentando reconectar...'));
 
 // Modelo de Pedido
 const OrderSchema = new mongoose.Schema({
@@ -39,7 +52,7 @@ const Order = mongoose.model('Order', OrderSchema);
 // --- CONFIGURAÇÃO MERCADO PAGO ---
 const client = new MercadoPagoConfig({ 
     accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
-    options: { timeout: 7000 }
+    options: { timeout: 10000 } // Aumentado para 10s
 });
 
 const paymentClient = new Payment(client);
@@ -49,7 +62,8 @@ const paymentClient = new Payment(client);
 app.get("/", (req, res) => {
     res.json({
         message: "Backend Rivers Store - Ativo",
-        database: mongoose.connection.readyState === 1 ? "Conectado" : "Desconectado"
+        database: mongoose.connection.readyState === 1 ? "Conectado" : "Desconectado",
+        timestamp: new Date()
     });
 });
 
@@ -61,7 +75,7 @@ app.post("/api/create-pix", async (req, res) => {
             return res.status(400).json({ error: "Dados incompletos" });
         }
 
-        // 💡 MELHORIA: Limpa o CPF para enviar apenas números ao Mercado Pago
+        // Limpa o CPF para enviar apenas números
         const cpfApenasNumeros = payer.identification?.number.replace(/\D/g, "") || "";
 
         const paymentBody = {
@@ -83,6 +97,7 @@ app.post("/api/create-pix", async (req, res) => {
 
         const payment = await paymentClient.create(paymentBody);
 
+        // Tenta salvar no banco. Com bufferCommands: false, se o banco estiver off, cai no catch.
         const novoPedido = new Order({
             cliente: `${payer.first_name || "Cliente"} ${payer.last_name || ""}`.trim(),
             email: payer.email.trim(),
@@ -108,14 +123,16 @@ app.post("/api/create-pix", async (req, res) => {
         });
 
     } catch (error) {
-        // 💡 MELHORIA: Log detalhado para você ver o erro real no Render
-        console.error("❌ Erro detalhado do Mercado Pago:", error.message);
-        if (error.cause) console.error("Causa:", JSON.stringify(error.cause));
+        console.error("❌ Erro no Processo de Pagamento:", error.message);
         
+        // Se o erro for do Banco de Dados (Timeout/Buffer)
+        if (error.name === 'MongooseError' || error.name === 'MongoServerError') {
+            return res.status(503).json({ error: "Banco de dados temporariamente indisponível. Tente novamente." });
+        }
+
         res.status(500).json({ 
             error: "Falha ao processar pagamento", 
-            message: error.message,
-            detail: error.cause ? error.cause[0]?.description : "Erro interno"
+            detail: error.cause ? error.cause[0]?.description : error.message 
         });
     }
 });
