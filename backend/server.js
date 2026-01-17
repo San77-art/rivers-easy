@@ -5,28 +5,27 @@ const mongoose = require("mongoose");
 const { MercadoPagoConfig, Payment } = require('mercadopago');
 require("dotenv").config();
 
-// Criar aplicação Express
 const app = express();
-const PORT = process.env.PORT || 10000; // Ajustado para porta padrão do Render
+const PORT = process.env.PORT || 10000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// --- CONFIGURAÇÃO MONGODB COM LÓGICA DE ESTABILIDADE ---
+// --- CONFIGURAÇÃO MONGODB ---
 const mongooseOptions = {
-    serverSelectionTimeoutMS: 5000, // Tenta conectar por 5s antes de dar erro
-    socketTimeoutMS: 45000,         // Mantém a conexão ativa por mais tempo
+    serverSelectionTimeoutMS: 5000, 
+    socketTimeoutMS: 45000,         
 };
 
 mongoose.connect(process.env.MONGODB_URI, mongooseOptions)
     .then(() => console.log("✅ Conectado ao MongoDB com sucesso!"))
     .catch(err => console.error("❌ Erro ao conectar ao MongoDB:", err));
 
-// Definição do Modelo de Pedido (Schema)
+// Modelo de Pedido
 const OrderSchema = new mongoose.Schema({
     cliente: String,
-    email: { type: String, lowercase: true }, // Salva sempre em minúsculo para facilitar busca
+    email: { type: String, lowercase: true }, 
     valor: Number,
     itens: String,
     cpf: String,
@@ -37,67 +36,66 @@ const OrderSchema = new mongoose.Schema({
 
 const Order = mongoose.model('Order', OrderSchema);
 
-// Configurar Mercado Pago
+// --- CONFIGURAÇÃO MERCADO PAGO ---
 const client = new MercadoPagoConfig({ 
     accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
-    options: { timeout: 7000 } // Tempo um pouco maior para evitar timeouts em conexões lentas
+    options: { timeout: 7000 }
 });
 
 const paymentClient = new Payment(client);
 
-// --- ROTAS DO SERVIDOR ---
+// --- ROTAS ---
 
-// 1. Rota de teste (Ponto de entrada)
 app.get("/", (req, res) => {
     res.json({
-        message: "Backend Rivers Store - Ativo e Conectado",
-        database: mongoose.connection.readyState === 1 ? "Conectado" : "Desconectado",
-        status: "online",
+        message: "Backend Rivers Store - Ativo",
+        database: mongoose.connection.readyState === 1 ? "Conectado" : "Desconectado"
     });
 });
 
-// 2. ROTA: Criar pagamento PIX e Salvar no Banco
 app.post("/api/create-pix", async (req, res) => {
     try {
         const { transaction_amount, description, payer } = req.body;
 
         if (!transaction_amount || !payer?.email) {
-            return res.status(400).json({ error: "Dados incompletos para processar pagamento" });
+            return res.status(400).json({ error: "Dados incompletos" });
         }
 
-        // Requisição para o Mercado Pago
-        const payment = await paymentClient.create({
+        // 💡 MELHORIA: Limpa o CPF para enviar apenas números ao Mercado Pago
+        const cpfApenasNumeros = payer.identification?.number.replace(/\D/g, "") || "";
+
+        const paymentBody = {
             body: {
                 transaction_amount: Number(transaction_amount),
                 description: description || "Compra na Perfumaria Rivers",
                 payment_method_id: "pix",
                 payer: {
-                    email: payer.email,
+                    email: payer.email.trim(),
                     first_name: payer.first_name || "Cliente",
                     last_name: payer.last_name || "Rivers",
                     identification: {
                         type: "CPF",
-                        number: payer.identification?.number || ""
+                        number: cpfApenasNumeros
                     }
                 }
             }
-        });
+        };
 
-        // SALVAMENTO NO BANCO (Persistência dos dados)
+        const payment = await paymentClient.create(paymentBody);
+
         const novoPedido = new Order({
             cliente: `${payer.first_name || "Cliente"} ${payer.last_name || ""}`.trim(),
-            email: payer.email,
+            email: payer.email.trim(),
             valor: Number(transaction_amount),
             itens: description,
-            cpf: payer.identification?.number || "Não informado",
+            cpf: cpfApenasNumeros,
             mercadoPagoId: payment.id.toString(),
-            status: payment.status // Já pega o status inicial do MP
+            status: payment.status
         });
 
         await novoPedido.save();
-        console.log(`💾 Pedido ${payment.id} salvo com sucesso no MongoDB!`);
+        console.log(`💾 Pedido ${payment.id} salvo no MongoDB!`);
 
-        // Resposta para o Frontend gerar o QR Code
         res.json({
             id: payment.id,
             status: payment.status,
@@ -110,54 +108,44 @@ app.post("/api/create-pix", async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Erro ao criar PIX:", error);
+        // 💡 MELHORIA: Log detalhado para você ver o erro real no Render
+        console.error("❌ Erro detalhado do Mercado Pago:", error.message);
+        if (error.cause) console.error("Causa:", JSON.stringify(error.cause));
+        
         res.status(500).json({ 
             error: "Falha ao processar pagamento", 
-            details: error.message 
+            message: error.message,
+            detail: error.cause ? error.cause[0]?.description : "Erro interno"
         });
     }
 });
 
-// 3. ROTA: Buscar histórico de pedidos por e-mail
 app.get("/api/orders/:email", async (req, res) => {
     try {
         const { email } = req.params;
-        const orders = await Order.find({ email: email.toLowerCase() }).sort({ data: -1 });
-        
-        console.log(`🔍 Histórico solicitado: ${email} - ${orders.length} pedidos encontrados.`);
+        const orders = await Order.find({ email: email.toLowerCase().trim() }).sort({ data: -1 });
         res.json(orders);
     } catch (error) {
-        console.error("❌ Erro ao buscar histórico:", error);
-        res.status(500).json({ error: "Erro ao carregar histórico de pedidos" });
+        res.status(500).json({ error: "Erro ao buscar histórico" });
     }
 });
 
-// 4. ROTA: Sincronizar status do pagamento
 app.get("/api/check-payment/:paymentId", async (req, res) => {
     try {
         const { paymentId } = req.params;
         const payment = await paymentClient.get({ id: parseInt(paymentId) });
 
-        // Atualização atômica no banco de dados
-        const updatedOrder = await Order.findOneAndUpdate(
+        await Order.findOneAndUpdate(
             { mercadoPagoId: paymentId },
-            { status: payment.status },
-            { new: true }
+            { status: payment.status }
         );
 
-        res.json({
-            id: payment.id,
-            status: payment.status,
-            status_detail: payment.status_detail,
-            order_updated: !!updatedOrder
-        });
+        res.json({ id: payment.id, status: payment.status });
     } catch (error) {
-        console.error("❌ Erro ao verificar pagamento:", error);
-        res.status(500).json({ error: "Erro ao sincronizar status de pagamento" });
+        res.status(500).json({ error: "Erro ao sincronizar status" });
     }
 });
 
-// Inicialização do Servidor
 app.listen(PORT, () => {
     console.log(`🚀 Servidor voando na porta ${PORT}`);
 });
