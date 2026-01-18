@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produto de Teste Real - Rivers Store | Perfume Store</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">Perfume Store</div>
+            <ul class="nav-links">
+                <li><a href="index.html">Início</a></li>
+                <li><a href="femininos.html">Femininos</a></li>
+                <li><a href="masculinos.html">Masculinos</a></li>
+                <li><a href="marcas.html">Marcas</a></li>
+            </ul>
+            <div class="nav-icons">
+                <a href="#" id="userIcon">👤</a>
+                <a href="carrinho.html" id="cartIcon">🛒 <span id="cartCount">0</span></a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="product-detail">
+        <div class="product-container">
+            <div class="product-image">
+                <img src="https://placehold.co/400x400?text=Teste+R$1" alt="Produto de Teste Real">
+            </div>
+            
+            <div class="product-info">
+                <div class="breadcrumb">
+                    <a href="index.html">Início</a> > <span>Teste</span> > Produto de Teste Real
+                </div>
+                
+                <span class="test-badge">PRODUTO DE TESTE</span>
+                
+                <h1>Produto de Teste Real</h1>
+                <p class="brand">Rivers Store</p>
+                
+                <div class="price">R$ 1,00</div>
+                
+                <div class="description">
+                    <p>Produto criado exclusivamente para testar o pagamento via PIX. Valor simbólico de 1 Real.</p>
+                    <p class="test-warning"><strong>Atenção:</strong> Este produto é apenas para fins de teste do sistema de pagamento. Ao finalizar a compra, um pagamento real de R$ 1,00 será processado.</p>
+                </div>
+
+                <div class="size-selector">
+                    <label>Tamanho:</label>
+                    <div class="size-options">
+                        <button class="size-btn active" data-size="1ml">1ml</button>
+                    </div>
+                </div>
+
+                <button class="add-to-cart-btn" onclick="addToCartFromProduct()">Adicionar ao Carrinho</button>
+
+                <div class="product-features">
+                    <div class="feature">
+                        <strong>✓</strong> Pagamento via PIX
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Confirmação instantânea
+                    </div>
+                    <div class="feature">
+                        <strong>✓</strong> Teste do sistema de pagamento
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Perfume Store. Todos os direitos reservados.</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // Produto de teste - ID 99
+        const currentProduct = products.find(p => p.id === 99) || {
+            id: 99,
+            name: "Produto de Teste Real",
+            brand: "Rivers Store",
+            price: 1.00,
+            category: "teste",
+            image: "https://placehold.co/400x400?text=Teste+R$1",
+            sizes: ["1ml"],
+            description: "Produto criado exclusivamente para testar o pagamento via PIX."
+        };
+
+        let selectedSize = currentProduct.sizes[0] || "1ml";
+
+        // Size selection
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                selectedSize = this.dataset.size;
+            });
+        });
+
+        // Add to cart using Cart class from script.js
+        function addToCartFromProduct() {
+            if (typeof cart !== 'undefined' && cart.addItem) {
+                cart.addItem(currentProduct, selectedSize);
+            } else {
+                // Fallback if Cart class not available
+                let cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+                const existingItem = cartItems.find(item => item.id === currentProduct.id && item.size === selectedSize);
+                
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cartItems.push({
+                        ...currentProduct,
+                        size: selectedSize,
+                        quantity: 1
+                    });
+                }
+                
+                localStorage.setItem('cart', JSON.stringify(cartItems));
+                updateCartCountFallback();
+                showNotification(`${currentProduct.name} (${selectedSize}) adicionado ao carrinho!`);
+            }
+        }
+
+        // Fallback update cart count
+        function updateCartCountFallback() {
+            const cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+            const count = cartItems.reduce((total, item) => total + item.quantity, 0);
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = count;
+            }
+        }
+
+        // Fallback notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #0a0a0a;
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 0.5rem;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // User icon functionality
+        const userIcon = document.getElementById('userIcon');
+        if (userIcon) {
+            userIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentUser = localStorage.getItem('currentUser') || localStorage.getItem('user');
+                if (currentUser) {
+                    window.location.href = 'conta.html';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+    </script>
+
+    <style>
+        .test-badge {
+            display: inline-block;
+            background-color: #ff6b6b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .test-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            color: #856404;
+            font-size: 14px;
+        }
+    </style>
+</body>
+</html>
