@@ -80,6 +80,16 @@ const products = [
         image: "images/onemillion.jpg.jpg",
         sizes: ["100ml"],
         description: "One Million é pura sedução. Notas de canela, couro e madeiras brancas criam uma fragrância intensa e magnética para homens confiantes."
+    },
+    {
+        id: 99,
+        name: "Produto de Teste Real",
+        brand: "Rivers Store",
+        price: 1.00,
+        category: "teste",
+        image: "https://placehold.co/400x400?text=Teste+R$1",
+        sizes: ["1ml"],
+        description: "Produto criado exclusivamente para testar o pagamento via PIX. Valor simbólico de 1 Real."
     }
 ];
 
